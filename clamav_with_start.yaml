@@ -1,6 +1,6 @@
 ---
 - name: Check and Manage ClamAV
-  hosts: your_target_host  # Replace with appropriate host/group
+  hosts: all  # Replace with appropriate host/group
 
   tasks:
     - name: Check if ClamAV is installed
