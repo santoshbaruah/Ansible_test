@@ -1,53 +1,75 @@
 ---
 - name: Advanced System Monitoring Playbook
-  hosts: all  # Replace with appropriate host/group
+  hosts: all  # Replace with your target hosts or groups
+  gather_facts: true
 
   tasks:
     - name: Get system information
-      ansible.builtin.setup:
-      register: system_info
+      ansible.builtin.debug:
+        var: ansible_facts
 
     - name: Check system uptime
       ansible.builtin.command: uptime
-      register: system_uptime
+      register: uptime_output
+      changed_when: false
+
+    - name: Print system uptime
+      ansible.builtin.debug:
+        msg: "System uptime: {{ uptime_output.stdout }}"
 
     - name: Check MySQL service status
-      ansible.builtin.service_facts:
-        patterns: mysql
-      register: mysql_service
+      ansible.builtin.systemd:
+        name: mysql
+        state: status
+      register: mysql_status
+
+    - name: Print MySQL service status
+      ansible.builtin.debug:
+        msg: "MySQL service is {{ 'running' if mysql_status.active else 'not running' }}"
 
     - name: Check Nginx service status
-      ansible.builtin.service_facts:
-        patterns: nginx
-      register: nginx_service
+      ansible.builtin.systemd:
+        name: nginx
+        state: status
+      register: nginx_status
+
+    - name: Print Nginx service status
+      ansible.builtin.debug:
+        msg: "Nginx service is {{ 'running' if nginx_status.active else 'not running' }}"
 
     - name: Check ClamAV service status
-      ansible.builtin.service_facts:
-        patterns: clamav-daemon
-      register: clamav_service
+      ansible.builtin.systemd:
+        name: clamav-daemon
+        state: status
+      register: clamav_status
 
-    - name: Get installed package versions
-      ansible.builtin.package_facts:
-        manager: auto
-      register: package_facts
-
-    - name: Check last changes timestamp
-      ansible.builtin.shell: stat -c %y /var/log/syslog
-      register: last_changes_timestamp
-
-    - name: Check running ports
-      ansible.builtin.command: netstat -tuln
-      register: open_ports
-
-    - name: Display monitoring results
+    - name: Print ClamAV service status
       ansible.builtin.debug:
-        msg: |
-          System Information: {{ system_info.ansible_facts }}
-          System Uptime: {{ system_uptime.stdout }}
-          Syslog Changes: {{ 'No changes' if not syslog_changes.changed else 'Changes detected' }}
-          MySQL Service: {{ 'Running' if mysql_service.services | default([]) else 'Not Running' }}
-          Nginx Service: {{ 'Running' if nginx_service.services | default([]) else 'Not Running' }}
-          ClamAV Service: {{ 'Running' if clamav_service.services | default([]) else 'Not Running' }}
-          Package Versions: {{ package_facts.ansible_facts.packages }}
-          Last Changes Timestamp: {{ last_changes_timestamp.stdout }}
-          Open Ports: {{ open_ports.stdout }}
+        msg: "ClamAV service is {{ 'running' if clamav_status.active else 'not running' }}"
+
+    - name: Get package versions
+      ansible.builtin.command: dpkg-query --showformat='${Package} ${Version}\n' --show
+      register: package_versions
+      changed_when: false
+
+    - name: Print package versions
+      ansible.builtin.debug:
+        var: package_versions.stdout_lines
+
+    - name: Check port availability
+      ansible.builtin.wait_for:
+        host: localhost  # Replace with the host you want to check
+        port: 80         # Replace with the port number you want to check
+        timeout: 5
+      register: port_available
+      failed_when: false
+
+    - name: Print port availability
+      ansible.builtin.debug:
+        msg: "Port 80 is {{ 'open' if port_available.is_reachable else 'closed' }}"
+
+    # Add more tasks for additional monitoring checks
+    # ...
+
+  # Add more roles or tasks as needed for your monitoring requirements
+  # ...
