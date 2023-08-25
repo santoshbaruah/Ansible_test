@@ -11,11 +11,6 @@
       ansible.builtin.command: uptime
       register: system_uptime
 
-    - name: Check syslog changes
-      ansible.builtin.shell: diff /var/log/syslog /var/log/syslog.1  # Compare current and previous syslog
-      register: syslog_changes
-      changed_when: syslog_changes.stdout != ""
-
     - name: Check MySQL service status
       ansible.builtin.service_facts:
         patterns: mysql
