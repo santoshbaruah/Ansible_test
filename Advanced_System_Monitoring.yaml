@@ -1,0 +1,58 @@
+---
+- name: Advanced System Monitoring Playbook
+  hosts: all  # Replace with appropriate host/group
+
+  tasks:
+    - name: Get system information
+      ansible.builtin.setup:
+      register: system_info
+
+    - name: Check system uptime
+      ansible.builtin.command: uptime
+      register: system_uptime
+
+    - name: Check syslog changes
+      ansible.builtin.shell: diff /var/log/syslog /var/log/syslog.1  # Compare current and previous syslog
+      register: syslog_changes
+      changed_when: syslog_changes.stdout != ""
+
+    - name: Check MySQL service status
+      ansible.builtin.service_facts:
+        patterns: mysql
+      register: mysql_service
+
+    - name: Check Nginx service status
+      ansible.builtin.service_facts:
+        patterns: nginx
+      register: nginx_service
+
+    - name: Check ClamAV service status
+      ansible.builtin.service_facts:
+        patterns: clamav-daemon
+      register: clamav_service
+
+    - name: Get installed package versions
+      ansible.builtin.package_facts:
+        manager: auto
+      register: package_facts
+
+    - name: Check last changes timestamp
+      ansible.builtin.shell: stat -c %y /var/log/syslog
+      register: last_changes_timestamp
+
+    - name: Check running ports
+      ansible.builtin.command: netstat -tuln
+      register: open_ports
+
+    - name: Display monitoring results
+      ansible.builtin.debug:
+        msg: |
+          System Information: {{ system_info.ansible_facts }}
+          System Uptime: {{ system_uptime.stdout }}
+          Syslog Changes: {{ 'No changes' if not syslog_changes.changed else 'Changes detected' }}
+          MySQL Service: {{ 'Running' if mysql_service.services | default([]) else 'Not Running' }}
+          Nginx Service: {{ 'Running' if nginx_service.services | default([]) else 'Not Running' }}
+          ClamAV Service: {{ 'Running' if clamav_service.services | default([]) else 'Not Running' }}
+          Package Versions: {{ package_facts.ansible_facts.packages }}
+          Last Changes Timestamp: {{ last_changes_timestamp.stdout }}
+          Open Ports: {{ open_ports.stdout }}
