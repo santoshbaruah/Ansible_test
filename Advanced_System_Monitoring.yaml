@@ -17,16 +17,6 @@
       ansible.builtin.debug:
         msg: "System uptime: {{ uptime_output.stdout }}"
 
-    - name: Check MySQL service status
-      ansible.builtin.service_facts:
-        manager: systemd
-      register: service_facts
-      changed_when: false
-
-    - name: Print MySQL service status
-      ansible.builtin.debug:
-        msg: "MySQL service is {{ 'running' if service_facts.services['mysql']['state'] == 'running' else 'not running' }}"
-
     - name: Check Nginx service status
       ansible.builtin.service_facts:
         manager: systemd
