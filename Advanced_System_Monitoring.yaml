@@ -20,13 +20,13 @@
     - name: Check ClamAV service status
       ansible.builtin.systemd:
         name: clamav-daemon
-        state: status
+        enabled: yes
       register: clamav_status
       changed_when: false
 
     - name: Print ClamAV service status
       ansible.builtin.debug:
-        msg: "ClamAV service is {{ 'running' if clamav_status.stdout_lines[0] == 'active' else 'not running' }}"
+        msg: "ClamAV service is {{ 'enabled' if clamav_status.changed else 'not enabled' }}"
 
     - name: Get package versions
       ansible.builtin.command: dpkg-query --showformat='${Package} ${Version}\n' --show
@@ -35,7 +35,7 @@
 
     - name: Print package versions
       ansible.builtin.debug:
-        var: package_versions.stdout_lines
+        msg: "{{ package_versions.stdout_lines | join('\n') }}"
 
     - name: Check port availability
       ansible.builtin.wait_for:
@@ -56,7 +56,9 @@
 
     - name: Print available RAM
       ansible.builtin.debug:
-        msg: "Available RAM:\n{{ ram_status.stdout }}"
+        msg: |
+          Available RAM:
+          {{ ram_status.stdout | indent(4) }}
 
     - name: Check disk space
       ansible.builtin.shell: df -h
@@ -65,7 +67,9 @@
 
     - name: Print disk space
       ansible.builtin.debug:
-        msg: "Disk space:\n{{ disk_space.stdout }}"
+        msg: |
+          Disk space:
+          {{ disk_space.stdout | indent(4) }}
 
     # Add more tasks for additional monitoring checks
     # ...
