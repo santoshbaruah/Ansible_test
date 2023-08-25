@@ -13,14 +13,24 @@
       - p7zip-full
       - p7zip-rar
       - clamav-daemon
-
   tasks:
 
-    - name: Check if packages are installed
+    - name: Get package manager
+      ansible.builtin.debug:
+        msg: "Package manager is {{ ansible_facts.pkg_mgr }}"  
+
+    - name: Get package facts
       ansible.builtin.package_facts:
-        manager: auto
+        manager: "{{ ansible_facts.pkg_mgr }}"
+      when: ansible_facts.pkg_mgr == "apt"
+
+    - name: Get package facts for yum
+      ansible.builtin.yum:
+        list:installed
+      when: ansible_facts.pkg_mgr == "yum"
+      register: yum_packages
 
     - name: Print package status
       ansible.builtin.debug:
-        msg: "{{ item }} is {{ 'installed' if item in ansible_facts.packages else 'not installed' }}"
+        msg: "{{ item }} is {{ 'installed' if ansible_facts.packages is defined and item in ansible_facts.packages else (yum_packages.results is defined and item in yum_packages.results) else 'not installed' }}"
       loop: "{{ packages }}"
