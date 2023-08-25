@@ -37,18 +37,6 @@
       ansible.builtin.debug:
         msg: "{{ package_versions.stdout_lines | join('\n') }}"
 
-    - name: Check port availability
-      ansible.builtin.wait_for:
-        host: localhost  # Replace with the host you want to check
-        port: 80         # Replace with the port number you want to check
-        timeout: 5
-      register: port_available
-      failed_when: false
-
-    - name: Print port availability
-      ansible.builtin.debug:
-        msg: "Port 80 is {{ 'open' if port_available.is_reachable else 'closed' }}"
-
     - name: Check available RAM
       ansible.builtin.command: free -h
       register: ram_status
