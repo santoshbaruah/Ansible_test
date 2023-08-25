@@ -1,0 +1,26 @@
+- hosts: all
+
+  vars:
+    packages:
+      - vim
+      - ssh
+      - curl
+      - htop
+      - fdisk
+      - nano
+      - zip 
+      - unzip
+      - p7zip-full
+      - p7zip-rar
+      - clamav-daemon
+
+  tasks:
+
+    - name: Check if packages are installed
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Print package status
+      ansible.builtin.debug:
+        msg: "{{ item }} is {{ 'installed' if item in ansible_facts.packages else 'not installed' }}"
+      loop: "{{ packages }}"
