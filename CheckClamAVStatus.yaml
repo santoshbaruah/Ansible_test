@@ -1,0 +1,34 @@
+---
+- name: Check ClamAV Status
+  hosts: all  # Replace with appropriate host/group
+
+  tasks:
+    - name: Check if ClamAV is installed
+      ansible.builtin.package_facts:
+        manager: auto
+      register: package_facts
+
+    - name: Check if freshclam is updated
+      ansible.builtin.shell: freshclam --check
+      changed_when: false
+      register: freshclam_status
+      failed_when: false
+
+    - name: Check if ClamAV daemon is running
+      ansible.builtin.service_facts:
+        filters:
+          - name=clamav-daemon
+      register: clamav_service_facts
+
+    - name: Start ClamAV daemon if not running
+      ansible.builtin.service:
+        name: clamav-daemon
+        state: started
+      when: "'clamav-daemon' not in clamav_service_facts.services"
+
+    - name: Display status messages
+      ansible.builtin.debug:
+        msg: |
+          ClamAV Installed: {{ 'Yes' if 'clamav' in package_facts.ansible_facts.packages else 'No' }}
+          Freshclam Updated: {{ 'Yes' if freshclam_status.rc == 0 else 'No' }}
+          ClamAV Daemon Running: {{ 'Yes' if 'clamav-daemon' in clamav_service_facts.services else 'No' }}
