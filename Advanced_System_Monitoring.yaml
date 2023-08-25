@@ -49,6 +49,24 @@
       ansible.builtin.debug:
         msg: "Port 80 is {{ 'open' if port_available.is_reachable else 'closed' }}"
 
+    - name: Check available RAM
+      ansible.builtin.command: free -h
+      register: ram_status
+      changed_when: false
+
+    - name: Print available RAM
+      ansible.builtin.debug:
+        msg: "Available RAM:\n{{ ram_status.stdout }}"
+
+    - name: Check disk space
+      ansible.builtin.shell: df -h
+      register: disk_space
+      changed_when: false
+
+    - name: Print disk space
+      ansible.builtin.debug:
+        msg: "Disk space:\n{{ disk_space.stdout }}"
+
     # Add more tasks for additional monitoring checks
     # ...
 
