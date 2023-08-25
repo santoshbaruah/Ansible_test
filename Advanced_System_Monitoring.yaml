@@ -17,25 +17,16 @@
       ansible.builtin.debug:
         msg: "System uptime: {{ uptime_output.stdout }}"
 
-    - name: Check Nginx service status
-      ansible.builtin.service_facts:
-        manager: systemd
-      register: service_facts
-      changed_when: false
-
-    - name: Print Nginx service status
-      ansible.builtin.debug:
-        msg: "Nginx service is {{ 'running' if service_facts.services['nginx']['state'] == 'running' else 'not running' }}"
-
     - name: Check ClamAV service status
-      ansible.builtin.service_facts:
-        manager: systemd
-      register: service_facts
+      ansible.builtin.systemd:
+        name: clamav-daemon
+        state: status
+      register: clamav_status
       changed_when: false
 
     - name: Print ClamAV service status
       ansible.builtin.debug:
-        msg: "ClamAV service is {{ 'running' if service_facts.services['clamav-daemon']['state'] == 'running' else 'not running' }}"
+        msg: "ClamAV service is {{ 'running' if clamav_status.stdout_lines[0] == 'active' else 'not running' }}"
 
     - name: Get package versions
       ansible.builtin.command: dpkg-query --showformat='${Package} ${Version}\n' --show
